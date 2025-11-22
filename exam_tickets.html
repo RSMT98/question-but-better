@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Генератор экзаменационного билета по JVM/Java</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .app {
+      max-width: 960px;
+      width: 100%;
+      background: #020617;
+      border-radius: 16px;
+      padding: 24px 20px 28px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      border: 1px solid #1e293b;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .subtitle {
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #052e16;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+      transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background 0.08s ease-out;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(16, 185, 129, 0.45);
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 12px rgba(16, 185, 129, 0.35);
+    }
+    .ticket-meta {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .ticket-meta span {
+      opacity: 0.9;
+    }
+    .blocks {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .block-card {
+      background: radial-gradient(circle at top left, #1e293b, #020617);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      border: 1px solid #1f2937;
+    }
+    .block-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+    }
+    .block-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(15, 118, 110, 0.15);
+      color: #67e8f9;
+      margin-bottom: 6px;
+    }
+    .question-text {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #d1d5db;
+    }
+    .question-number {
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+    .empty-state {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    .hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    @media (max-width: 600px) {
+      .app {
+        padding: 18px 14px 22px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Генератор билета по JVM / Java Internals</h1>
+    <div class="subtitle">
+      Нажми «Сгенерировать билет», чтобы случайно выбрать 3 блока из 5 и по одному вопросу в каждом.
+    </div>
+
+    <div class="controls">
+      <button id="generateBtn">Сгенерировать билет</button>
+      <div class="ticket-meta" id="ticketMeta">
+        <span>Билет ещё не сгенерирован.</span>
+      </div>
+    </div>
+
+    <div id="ticketContainer">
+      <div class="empty-state">
+        Здесь появятся выбранные блоки и вопросы. Каждый билет содержит 3 блока из 5 и 3 вопроса.
+      </div>
+    </div>
+
+    <div class="hint">
+      Вопросы пронумерованы так же, как в исходном списке (1–38), чтобы совпадали с конспектами.
+    </div>
+  </div>
+
+  <script>
+    // Описание блоков и вопросов
+    const blocks = [
+      {
+        id: "A",
+        name: "Блок A — Платформа и кроссплатформенность Java",
+        questions: [
+          { number: 1, text: "Как Java решает кроссплатформенность?" },
+          { number: 2, text: "Безопасность памяти в Java. Инструкции, GC, верификация." },
+          { number: 3, text: "От исходного кода к выполнению. Компиляция, линковка, packaging, верификация, JIT." },
+          { number: 4, text: "Стэковая и регистровая машины. Почему выбрана стэковая?" }
+        ]
+      },
+      {
+        id: "B",
+        name: "Блок B — Байткод, class file, вызовы и generics",
+        questions: [
+          { number: 5, text: "vtable и itable. Как и когда резолвятся методы? Что делается в момент самого вызова?" },
+          { number: 6, text: "Анатомия stack frame. Локальные переменные, опстэк. Указатель this." },
+          { number: 7, text: "Этапы линковки класса." },
+          { number: 8, text: "Анатомия class file. Constant pool, атрибуты, stack maps." },
+          { number: 9, text: "Constant pool и как он используется. Типы констант." },
+          { number: 10, text: "Дескриптор метода и кодирование типов. Для чего нужно? Как влияют generics?" },
+          { number: 11, text: "JVM инструкции: ALU, load/store и типизированность операций." },
+          { number: 12, text: "JVM инструкции: вызовы. Какие инструкции и в чем разница? Поиск (lookup) метода и собственно вызов." },
+          { number: 13, text: "invokedynamic: BSM, MethodHandle, Callsite. Как работает? Как передаются доп аргументы?" },
+          { number: 31, text: "Как работает type erasure при использовании generics?" }
+        ]
+      },
+      {
+        id: "C",
+        name: "Блок C — JIT, оптимизации и динамика выполнения",
+        questions: [
+          { number: 14, text: "JIT: что компилируется? Что такое горячие методы? Какая информация собирается?" },
+          { number: 15, text: "JIT: в чем заключается спекулятивность? Pros and cons." },
+          { number: 16, text: "JIT: interpreted, C1, C2. Когда происходит тразит? Какие транзиты есть?" },
+          { number: 17, text: "JIT: как происходит подмена кода туда и обратно?" },
+          { number: 18, text: "Что такое деоптимизация и когда происходит? Зачем?" },
+          { number: 19, text: "Constant folding, safety checks removal optimiztions. Удалание общих подвыражений." },
+          { number: 20, text: "Escape analysis. Замена аллокаций на куче на объекты на стэке." },
+          { number: 21, text: "Девиртуализация и inlining. Monomorphic, bimorphic, megaporhic. Speculation." },
+          { number: 30, text: "Почему динамическая загрузка классов может «сломать» JIT-оптимизацию?" }
+        ]
+      },
+      {
+        id: "D",
+        name: "Блок D — Сборка мусора и layout объектов",
+        questions: [
+          { number: 22, text: "Mark-and-sweep algorithm." },
+          { number: 23, text: "Как параллелится MnS?" },
+          { number: 24, text: "Как MnS делается неполным? Регионы, RSets." },
+          { number: 25, text: "Как MnS делается concurrent? TAMS, modification queue." },
+          { number: 26, text: "Tricolor marking algorithm." },
+          { number: 27, text: "Как отмечаются живые объекты? Mark bitmap." },
+          { number: 28, text: "Зачем нужны регионы? Eden, young, survivior, old, humongous, free." },
+          { number: 29, text: "Compaction. Algorithm, parallelisation." },
+          { number: 32, text: "Что содержится в заголовке объекта (mark word, klass pointer)? Как используется?" },
+          { number: 33, text: "Что такое GC roots? Как JVM добивается остановки программы в нужном месте?" }
+        ]
+      },
+      {
+        id: "E",
+        name: "Блок E — Java Memory Model и многопоточность",
+        questions: [
+          { number: 34, text: "Memory order: что такое? Что такое conflicting ops? Data race? Почему возникают? Модель CPU." },
+          { number: 35, text: "Что такое sequential consistency? Как data race free и SC связаны?" },
+          { number: 36, text: "3 проблемы multithreaded кода: visibility, order, atomicity. Как решается atomicity? Word tearing." },
+          { number: 37, text: "Как решается visibility and order? Happens before. Корректность с точки зрения happens before." },
+          { number: 38, text: "Свойства happens before. Транзитивность. Соотношение с program order. Acquire-release semantics. Какие операции синхронизованны по happens-before?" }
+        ]
+      }
+    ];
+
+    // Перемешивание массива (Fisher–Yates)
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function generateTicket() {
+      // 1) выбираем 3 случайных блока из 5
+      const shuffledBlocks = shuffle(blocks);
+      const selectedBlocks = shuffledBlocks.slice(0, 3);
+
+      // 2) в каждом блоке выбираем один случайный вопрос
+      const ticket = selectedBlocks.map(block => {
+        const qIndex = Math.floor(Math.random() * block.questions.length);
+        return {
+          blockId: block.id,
+          blockName: block.name,
+          question: block.questions[qIndex]
+        };
+      });
+
+      renderTicket(ticket);
+    }
+
+    function renderTicket(ticket) {
+      const container = document.getElementById("ticketContainer");
+      container.innerHTML = "";
+
+      const blocksWrapper = document.createElement("div");
+      blocksWrapper.className = "blocks";
+
+      ticket.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "block-card";
+
+        const tag = document.createElement("div");
+        tag.className = "block-tag";
+        tag.textContent = "Блок " + item.blockId;
+
+        const title = document.createElement("div");
+        title.className = "block-title";
+        title.textContent = item.blockName;
+
+        const questionEl = document.createElement("div");
+        questionEl.className = "question-text";
+        questionEl.innerHTML = `<span class="question-number">Вопрос ${item.question.number}:</span> ${item.question.text}`;
+
+        card.appendChild(tag);
+        card.appendChild(title);
+        card.appendChild(questionEl);
+
+        blocksWrapper.appendChild(card);
+      });
+
+      container.appendChild(blocksWrapper);
+
+      const meta = document.getElementById("ticketMeta");
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      meta.innerHTML = `<span>Текущий билет сгенерирован в ${timeStr}. Всего блоков: 5, в билете: 3, вопросов: 3.</span>`;
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", generateTicket);
+  </script>
+</body>
+</html>
